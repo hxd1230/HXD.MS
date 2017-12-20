@@ -1,0 +1,305 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    <link href="~/Content/jquery-easyui-1.5.3/themes/default/easyui.css" rel="stylesheet" />
+    <script src="~/Content/jquery-easyui-1.5.3/jquery.min.js"></script>
+    <script src="~/Content/jquery-easyui-1.5.3/jquery.easyui.min.js"></script>
+    <script src="~/Content/jquery-easyui-1.5.3/locale/easyui-lang-zh_CN.js"></script>
+    <link href="~/Content/table.css" rel="stylesheet" />
+    <link href="~/Content/jquery-easyui-1.5.3/themes/icon.css" rel="stylesheet" />
+    <script src="~/Content/layer/layer.js"></script>
+    <script>
+        //新增
+        function add() {
+            $('<div/>').dialog({
+                id: 'table-datagrid-add',
+                href: '/Menu/MenuAdd',
+                title: '添加菜单',
+                width: 400,
+                height: 300,
+                modal: true,
+                buttons: [{
+                    id: 'btnAdd',
+                    text: '添 加',
+                    handler: function () {
+                        $('#AddForm').form('submit', {
+                            url: '/Menu/MenuAdd',
+                            onSubmit: function (param) {
+                                var parentId = $('#treeMenuParentId').combotree('getValues').toString();
+                                param.Name = $('#txtMenuName').val();
+                                param.Code = $('#txtMenuCode').val();
+                                param.Icon = $('#txtMenuIcon').val();
+                                param.SortIndex = $('#txtSortIndex').val();
+                                param.Link = $('#txtLink').val();
+                                param.ParentId = (parentId == "" ? 0 : parentId);
+                                if ($(this).form('validate')) {
+                                    $('#btnAdd').linkbutton('disable');
+                                    return true;
+                                }
+                                else {
+                                    $('#btnAdd').linkbutton('enable');
+                                    return false;
+                                }
+                            },
+                            success: function (data) {
+                                var result = JSON.parse(data);
+                                if (result.code == 200) {
+                                    $('#table-datagrid-add').dialog('destroy');
+                                    $('#table-datagrid').datagrid('reload');
+                                } else {
+                                    this.alert(data.messager);
+                                }
+                            }
+                        });
+                    }
+                }, {
+                    id: 'btnCancel',
+                    text: '取 消',
+                    handler: function () {
+                        $(this).dialog('destroy');
+                    }
+                }
+                ],
+                onLoad: function () {
+
+                },
+                onClose: function () {
+                    $(this).dialog('destroy');
+                }
+            })
+        }
+
+        //删除
+        function del() {
+            var rows = $('#table-datagrid').datagrid('getChecked');
+            if (rows.length < 1) {
+                messageBox('请选择一条记录');
+                return;
+            }
+            $.messager.confirm('提示', '确定删除？', function (flag) {
+                if (flag) {
+                    var ids = "";
+                    $.each(rows, function (index, row) {
+                        ids += row.Id + ",";
+                    });
+                    ids = ids.substring(0, ids.length - 1);
+                    $.ajax({
+                        url: '/Menu/MenuDelete',
+                        type: 'post',
+                        //如果后台是以ok:删除成功这种返回，加上这句话的话会不显示信息
+                        //dataType: 'json',
+                        data: { id: ids },
+                        success: function (data) {
+                            var result = JSON.parse(data);
+                            if (result.code == 200) {
+                                $('#table-datagrid').datagrid('reload').datagrid('clearSelections').datagrid('checkChecked');
+                            } else {
+                                messageBox(data.message);
+                            }
+                        }
+                    });
+                }
+            })
+        }
+        //修改
+        function edit() {
+            var row = $('#table-datagrid').datagrid('getChecked');
+            if (row.length < 1) {
+                this.alert('请选择一条记录');
+                return;
+            }
+            $('<div/>').dialog({
+                id: 'table-datagrid-edit',
+                href: '/Menu/MenuEdit',
+                title: '修改菜单',
+                width: 400,
+                height: 300,
+                modal: true,
+                buttons: [{
+                    id: 'btnEdit',
+                    text: '修 改',
+                    handler: function () {
+                        $('EditForm').form('submit', {
+                            url: '/Menu/MenuEdit',
+                            onSubmit: function (param) {
+                            }
+                        });
+                    }
+                }],
+                onLoad: function () {
+                    $('#Id').val(row[0].Id);
+                    $('#Name').val(row[0].Name);
+                    $('#Code').val(row[0].Code);
+                    $('#Icon').combotree('setValue', row[0].Icon);
+                    $('#SortIndex').numberspinner('setValue', row[0].SortIndex);
+                    $('#Link').val(row[0].Link);
+                    if (row[0].ParentId != "0") {
+                        $('#ParentId').combotree('setValue', row[0].ParentId);
+                    }
+                },
+                onClose: function () {
+                    $(this).dialog('destroy');
+                }
+            });
+        }
+        function messageBox(text) {
+            layer.alert(text);
+        }
+        //分配按钮
+        function allot() {
+            var row = $('#table-datagrid').datagrid('getChecked');
+            if (row.length < 1) {
+                this.alert('请选择一条记录');
+                return;
+            }
+            if (row[0].ParentId == 0 || row[0].ParentId == "") {
+                this.alert('根节点无法分配按钮');
+                $('#table-datagrid').datagrid('clearSelections').datagrid('clearChecked');
+                return;
+            }
+
+            $('<div/>').dialog({
+                id: 'table-datagrid-allot',
+                href: '/Menu/AllotMenuButton',
+                title: '分配按钮',
+                width: 400,
+                height: 200,
+                modal: true,
+                buttons: [{
+                    id: 'btnAllot',
+                    text: '保 存',
+                    handler: function () {
+                        $('#AllotMenuButtonForm').form('submit', {
+                            url: '/Menu/AllotMenuButton',
+                            onSubmit: function (param) {
+                                $('#btnAllot').linkbutton('disable');
+                                param.menuId = $('#hidid').val();
+                                param.buttonIds = $('#comButtonTree').combotree('getValues').toString();
+                                if ($(this).form('validate')) {
+                                    return true;
+                                } else {
+                                    $('#btnAllot').linkbutton('enable');
+                                    return false;
+                                }
+                            },
+                            success: function (data) {
+                                var result = JSON.parse(data);
+                                if (result.code == 200) {
+                                    $('#table-datagrid-allot').dialog('destroy');
+                                    layer.alert(result.message);
+                                } else {
+                                    $('#btnAllot').linkbutton('enable');
+                                    this.alert(result.message);
+                                }
+                            }
+                        })
+                    }
+                }],
+                onLoad: function () {
+                    $('#hidid').val(row[0].Id);
+                    $('#txtMenuBtnName').val(row[0].Name);
+                    $.ajax({
+                        url: '/Menu/GetButtonsByMenuId',
+                        data: { menuId: row[0].Id },
+                        success: function (data) {
+                            if (data != null && data != "") {
+                                $('#comButtonTree').combotree('setValues', data.split(','));
+                            }
+                        }
+                    });
+                },
+                onClose: function () {
+                    $(this).dialog('destroy');
+                }
+            });
+        }
+
+        //获取分配的按钮
+        function getToolBar(data) {
+            if (data.toolbar != undefined && data.toolbar != '') {
+                var toolbar = [];
+                $.each(data.toolbar, function (index, row) {
+                    var handler = row.handler;
+                    row.handler = function () {
+                        eval(handler);
+                    }
+                    toolbar.push(row);
+                })
+                return toolbar;
+            }
+            else {
+                return [];
+            }
+        }
+
+        $(function () {
+            $.ajax({
+                url: '/Button/GetMenuButton',//加载菜单拥有的按钮
+                type: 'get',
+                dataType: 'json',
+                data: { menuCode: 'menu' }
+            }).success(function (data) {
+                var toolbar = getToolBar(data);
+                $('#table-datagrid').datagrid({
+                    url: '/Menu/GetAllMenu',
+                    idField: 'Id',
+                    pageList: [15, 30, 45],
+                    pagination: true,//是否有分页
+                    pageSize: 15,
+                    singleSelect: true,
+                    fit: true,
+                    loadMsg: 'loading...',
+                    fitColumns: true,//列自适应
+                    nowrap: false,
+                    pageNumber: 1,//当前页,
+                    rownumbers: true,
+                    queryParams: {},//后台传参
+                    striped: true,
+                    columns: [[
+                        { field: 'Id', title: '菜单编号', width: 50 },
+                        { field: 'Name', title: '菜单名称', width: 50 },
+                        { field: 'Code', title: '标识码', width: 50 },
+                        { field: 'Link', title: '链接', width: 50 },
+                        { field: 'Icon', title: '图标', width: 50 },
+                        { field: 'SortIndex', title: '排序', width: 50 },
+                        { field: 'CreateTime', title: '创建时间', width: 50 },
+                        { field: 'Creater', title: '创建人', width: 50 }
+                    ]], toolbar: (toolbar.length == 0 ? null : toolbar)
+                });
+            })
+        })
+    </script>
+</head>
+<body>
+    <div id="ui_menu_layout" class="easyui-layout" data-options="fit:true,border:false">
+        <div data-options="region:'north',split:true,border:true,collapsed:false" title="搜索条件" style="height:72px;">
+            <div id="ui_menu_search">
+                <table class="tableForm" style="height:28px;background:#f5f5f5;">
+                    <tr>
+                        <th height="20px">
+                            菜单名：
+                        </th>
+                        <td>
+                            <input name="Name" id="txtSearchMenuName" class="easyui-validatebox textbox" style="width:170px;height:22px;" />
+                        </td>
+                        <td>
+                            <a href="javascript:void(0);" class="easyui-linkbutton" iconcls="icon-search" plain="true"
+                               onclick="searchdata();">搜索</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div data-options="region:'center',border:false">
+            <table id="table-datagrid" data-options="fit:true,border:false"></table>
+        </div>
+    </div>
+</body>
+</html>

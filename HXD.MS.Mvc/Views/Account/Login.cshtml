@@ -1,0 +1,102 @@
+﻿@{
+    ViewBag.Title = "Login";
+    Layout = null;
+}
+<!DOCTYPE html>
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title></title>
+    <link href="~/content/jquery-easyui-1.5.3/themes/bootstrap/easyui.css" rel="stylesheet" />
+    <script src="~/content/jquery-easyui-1.5.3/jquery.min.js"></script>
+    <script src="~/content/jquery-easyui-1.5.3/jquery.easyui.min.js"></script>
+    <script src="~/content/jquery-easyui-1.5.3/locale/easyui-lang-zh_CN.js"></script>
+    <link href="~/content/jquery-easyui-1.5.3/themes/icon.css" rel="stylesheet" />
+    <script src="~/Content/layer/layer.js"></script>
+    @*<script src="~/Content/js/common.js"></script>
+        <link href="~/Content/themes/table.css" rel="stylesheet" />*@
+    <link href="~/Content/table.css" rel="stylesheet" />
+    <script>
+        $(function () {
+            $('#loginDialog').dialog({
+                title: '用户登录',
+                closeable: false,
+                modal: true,
+                width: 310,
+                height: 220,
+                buttons: [{
+                    id: 'loginBtn',
+                    text: '登录',
+                    handler: function () {
+                        if ($('loginFrm').form('validate')) {
+                            login();
+                        }
+                    }
+                }]
+            });
+        })
+
+        function login() {
+            var postData = {
+                userName: $('#userName').val(),
+                userPass: $('#userPass').val()
+            };
+            $.ajax({
+                url: '/Account/Login',
+                data: postData,
+                dataType: 'json',
+                type: 'post'
+            }).success(function (data) {
+                if (data.code != 200) {
+                    layer.msg(data.message);
+                }
+                else {
+                    //window.location.href = '/Home/Index';
+
+                    @if(ViewBag.ReturnUrl!=null)
+                    {
+                    @:window.location.href = '@ViewBag.ReturnUrl';
+                                                                                                }
+                else
+                {
+                        @:window.location.href = '/Home/Index';
+                                    }
+                }
+            }).error();
+        }
+    </script>
+</head>
+<body>
+    <div id="loginDialog" style="padding: 15px; text-align: center">
+        <form id="loginFrm" method="post">
+            <table class="tableForm" style="width: 100%">
+                <tr>
+                    <th>
+                        用户名：
+                    </th>
+                    <td>
+                        <input type="text" id="userName" value="admin" name="userName" class="easyui-validatebox textbox" style="width:170px;height:22px;" data-options="prompt:'UserName',required:true,validType:'length[2,20]'" />
+                    </td>
+                </tr>
+                <tr>
+                    <th>
+                        密&nbsp;码：
+                    </th>
+                    <td>
+                        <input type="password" id="userPass" value="admin" name="userPass" class="easyui-validatebox textbox" style="width: 170px; height: 22px;" data-options="prompt:'Password',required:true" />
+                    </td>
+                </tr>
+                @*<tr>
+                        <th>
+                            验证码：
+                        </th>
+                        <td>
+                            <input type="text" class="easyui-validatebox textbox" name="loginVerificationCode" id="loginVerificationCode" style="width: 100px; height: 22px; vertical-align: middle;" />
+                            <img id="valiCode" style="vertical-align: middle;" src="@Url.Action("GetValidatorGraphics", "Validator")" title="看不清？点击更换图片。" />
+                        </td>
+                    </tr>*@
+            </table>
+        </form>
+    </div>
+</body>
+</html>

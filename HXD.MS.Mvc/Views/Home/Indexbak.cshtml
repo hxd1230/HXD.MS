@@ -1,0 +1,29 @@
+﻿@{
+    ViewBag.Title = "Index";
+    Layout = "~/Views/Shared/_Layout.cshtml";
+}
+
+<div id="tt" class="easyui-tabs" data-options="region:'center'" style="background:#eee;">
+</div>
+
+<script>
+    $(function () {
+        // myfunction();
+    })
+
+    function myfunction() {
+        //获取组件的属性或内容
+        //var _url = $(p).attr('url');
+        //var _value = $(p).text();
+        //if ($("#tt").tabs("exists", _value)) {
+        //    $("#tt").tabs("select", _value);
+        //}
+        //else {
+        $("#tt").tabs('add', {
+            title: 'hello',
+            closable: true,
+            content: '<iframe src="http://localhost:53265/Menu" frameborder=0 height=100% width=100% scrolling=no></iframe>'
+        })
+        //}
+    }
+</script>

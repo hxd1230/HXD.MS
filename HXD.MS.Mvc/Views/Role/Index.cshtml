@@ -1,0 +1,260 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    <link href="~/Content/jquery-easyui-1.5.3/themes/default/easyui.css" rel="stylesheet" />
+    <script src="~/Content/jquery-easyui-1.5.3/jquery.min.js"></script>
+    <script src="~/Content/jquery-easyui-1.5.3/jquery.easyui.min.js"></script>
+    <script src="~/Content/jquery-easyui-1.5.3/locale/easyui-lang-zh_CN.js"></script>
+    <link href="~/Content/table.css" rel="stylesheet" />
+    <link href="~/Content/jquery-easyui-1.5.3/themes/icon.css" rel="stylesheet" />
+    <script src="~/Content/layer/layer.js"></script>
+    <script>
+
+        function checked(obj) {
+            var rows = $(obj).datagrid('getChecked');
+            if (rows.length < 1) {
+                messageBox('请选择一条记录');
+                return;
+            }
+            return rows;
+        }
+
+        function messageBox(text) {
+            layer.alert(text);
+        }
+        //新增
+        function add() {
+            var url = '/Role/RoleAdd';
+            $('<div/>').dialog({
+                id: 'table-datagrid-add',
+                href: url,
+                title: '添加角色',
+                width: 400,
+                height: 250,
+                modal: true,
+                buttons: [{
+                    id: 'btnAdd',
+                    text: '添加',
+                    handler: function () {
+                        $('#AddForm').form('submit', {
+                            url: url,
+                            onSubmit: function (param) {
+                                param.Name = $('#txtName').val();
+                                param.Remark = $('#txtRemark').val();
+                                if ($(this).form('validate')) {
+                                    $('#btnAdd').linkbutton('disable');
+                                    return true;
+                                }
+                                else {
+                                    $('#btnAdd').linkbutton('enable');
+                                    return false;
+                                }
+                            },
+                            success: function (data) {
+                                var result = JSON.parse(data);
+                                if (result.code == 200) {
+                                    $('#table-datagrid-add').dialog('destroy');
+                                    $('#table-datagrid').datagrid('reload');
+                                } else {
+                                    this.alert(data.messager);
+                                }
+                            }
+                        });
+                    }
+                }, {
+                    id: 'btnCancel',
+                    text: '取 消',
+                    handler: function () {
+                        $(this).dialog('destroy');
+                    }
+                }
+                ],
+                onLoad: function () {
+
+                },
+                onClose: function () {
+                    $(this).dialog('destroy');
+                }
+            })
+        }
+
+        //删除
+        function del() {
+            var row = $('#table-datagrid').datagrid('getChecked');
+            if (row.length < 1) {
+                messageBox('请选择一条记录');
+                return;
+            }
+            $.messager.confirm('提示', '确定删除？', function (flag) {
+                if (flag) {
+                    var ids = "";
+                    $.each(rows, function (index, row) {
+                        ids += row.Id + ",";
+                    });
+                    ids = ids.substring(0, ids.length - 1);
+                    $.ajax({
+                        url: '/Role/RoleDelete',
+                        type: 'post',
+                        //如果后台是以ok:删除成功这种返回，加上这句话的话会不显示信息
+                        //dataType: 'json',
+                        data: { id: ids },
+                        success: function (data) {
+                            var result = JSON.parse(data);
+                            if (result.code == 200) {
+                                $('#table-datagrid').datagrid('reload').datagrid('clearSelections').datagrid('checkChecked');
+                            } else {
+                                this.alert(data.messager);
+                            }
+                        }
+                    });
+                }
+            })
+        }
+        //修改
+        function edit() {
+            var url = '/Role/RoleEdit';
+            var row = $('#table-datagrid').datagrid('getChecked');
+            if (row.length < 1) {
+                messageBox('请选择一条记录');
+                return;
+            }
+            $('<div/>').dialog({
+                id: 'table-datagrid-edit',
+                href: url,
+                title: '角色修改',
+                width: 400,
+                height: 250,
+                modal: true,
+                buttons: [{
+                    id: 'btnEdit',
+                    text: '修 改',
+                    handler: function () {
+                        $('#EditForm').form('submit', {
+                            url: url,
+                            onSubmit: function (param) {
+                                param.Id = $('#txtId').val();
+                                param.Name = $('#txtName').val();
+                                param.Remark = $('#txtRemark').val();
+                                if ($(this).form('validate')) {
+                                    $('#btnEdit').linkbutton('disable');
+                                    return true;
+                                }
+                                else {
+                                    $('#btnEdit').linkbutton('enable');
+                                    return false;
+                                }
+                            },
+                            success: function (data) {
+                                var result = JSON.parse(data);
+                                if (result.code == 200) {
+                                    $('#table-datagrid-edit').dialog('destroy');
+                                    messageBox(result.message);
+                                    $('#table-datagrid').datagrid('reload');
+                                } else {
+                                    messageBox(result.message);
+                                }
+                            }
+                        });
+                    }
+                }],
+                onLoad: function () {
+                    $('#txtId').val(row[0].Id);
+                    $('#txtName').val(row[0].Name);
+                    $('#txtRemark').val(row[0].Remark);
+                },
+                onClose: function () {
+                    try {
+                        $(this).dialog('destroy');
+                    } catch (e) {
+                        console.log('--------' + e);
+                    }
+                }
+            });
+        }
+
+        //获取分配的按钮
+        function getToolBar(data) {
+            if (data.toolbar != undefined && data.toolbar != '') {
+                var toolbar = [];
+                $.each(data.toolbar, function (index, row) {
+                    var handler = row.handler;
+                    row.handler = function () {
+                        eval(handler);
+                    }
+                    toolbar.push(row);
+                })
+                return toolbar;
+            }
+            else {
+                return [];
+            }
+        }
+
+        $(function () {
+            $.ajax({
+                url: '/Button/GetMenuButton',//加载菜单拥有的按钮
+                type: 'get',
+                dataType: 'json',
+                data: { menuCode: 'role' }
+            }).success(function (data) {
+                var toolbar = getToolBar(data);
+                $('#table-datagrid').datagrid({
+                    url: '/Role/GetAllRole',
+                    idField: 'Id',
+                    pageList: [15, 30, 45],
+                    pagination: true,//是否有分页
+                    pageSize: 15,
+                    singleSelect: true,
+                    fit: true,
+                    loadMsg: 'loading...',
+                    fitColumns: true,//列自适应
+                    nowrap: false,
+                    pageNumber: 1,//当前页,
+                    rownumbers: true,
+                    queryParams: {},//后台传参
+                    striped: true,
+                    columns: [[
+                        { field: 'Id', title: '菜单编号', width: 50 },
+                        { field: 'Name', title: '菜单名称', width: 50 },
+                        { field: 'CreateTime', title: '创建时间', width: 50 },
+                        { field: 'Creater', title: '创建人', width: 50 },
+                        { field: 'Remark', title: '备注', width: 50 }
+                    ]], toolbar: (toolbar.length == 0 ? null : toolbar)
+                });
+            })
+        })
+    </script>
+</head>
+<body>
+    <div id="ui_menu_layout" class="easyui-layout" data-options="fit:true,border:false">
+        <div data-options="region:'north',split:true,border:true,collapsed:false" title="搜索条件" style="height:72px;">
+            <div id="ui_menu_search">
+                <table class="tableForm" style="height:28px;background:#f5f5f5;">
+                    <tr>
+                        <th height="20px">
+                            菜单名：
+                        </th>
+                        <td>
+                            <input name="Name" id="txtSearchMenuName" class="easyui-validatebox textbox" style="width:170px;height:22px;" />
+                        </td>
+                        <td>
+                            <a href="javascript:void(0);" class="easyui-linkbutton" iconcls="icon-search" plain="true"
+                               onclick="searchdata();">搜索</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div data-options="region:'center',border:false">
+            <table id="table-datagrid" data-options="fit:true,border:false"></table>
+        </div>
+    </div>
+</body>
+</html>

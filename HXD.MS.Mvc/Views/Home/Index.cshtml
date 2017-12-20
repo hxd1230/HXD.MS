@@ -1,0 +1,162 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <title>后台权限管理首页</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <link rel="shortcut icon" type="image/ico" href="~/Content/jquery-easyui-1.5.3/themes/icon/user_home.png" />
+    <link href="~/Content/jquery-easyui-1.5.3/themes/bootstrap/easyui.css" rel="stylesheet" />
+    <script src="~/Content/jquery-easyui-1.5.3/jquery.min.js"></script>
+    <script src="~/Content/jquery-easyui-1.5.3/jquery.easyui.min.js"></script>
+    <script src="~/Content/jquery-easyui-1.5.3/locale/easyui-lang-zh_CN.js"></script>
+    <link href="~/Content/table.css" rel="stylesheet" />
+    <link href="~/Content/jquery-easyui-1.5.3/themes/icon.css" rel="stylesheet" />
+
+    <script>
+
+
+        function logOut() {
+            $.messager.confirm('提示', '确定退出系统？', function (enter) {
+                if (enter) {
+                    //var param = { "action": "logout" };
+                    $.ajax({
+                        url: '/Account/LogOut',
+                        type: 'post',
+                        //data: param,
+                        dataType: 'json',
+                    }).success(function (data) {
+                        if (data.code == 200) {
+                            window.location.href = '/Account/Login';
+                        } else {
+                            $.messager.alert('提示', data.message);
+                        }
+                    });
+                }
+            })
+        }
+
+        //添加选项卡
+        function addTab(title, url, icon) {
+
+            var html = '<iframe src="' + url + '" frameborder=0 height=100% width=100% scrolling=no></iframe>';
+            var thisTab = $('#tabs');
+            if (!thisTab.tabs('exists', title)) {
+                thisTab.tabs('add', {
+                    title: title,
+                    content: html,
+                    iconCls: icon,
+                    closable: true,
+                    loadingMessage: 'loading...'
+                })
+            } else {
+                thisTab.tabs('select', title);
+            }
+        }
+
+        $(function () {
+            $('#RightAccordion').accordion({
+                fit: true,
+                fillSpace: true,
+                border: false,
+                animate: false
+            });
+
+            $.ajax({
+                url: '/Home/GetTree',
+                method: 'post',
+                dataType: 'json'
+            }).success(function (data) {
+                $.each(data.data, function (index, ele) {
+                    var id = ele.id;
+                    $('#RightAccordion').accordion('add', {
+                        title: ele.text,
+                        iconCls: ele.iconCls,
+                        content: "<ul class='menu-left' id='tree" + id + "'></ul>",
+                        selected: true
+                    })
+                    $.parser.parse();
+                    var children = data.data[index].children;
+
+                    $('#tree' + id).tree({
+                        data: children,
+                       
+                        onClick: function (node) {
+                            if (node.state == 'closed') {
+                                $(this).tree('expand', node.target);
+                            } else if (node.state = 'open') {
+                                $(this).tree('collapse', node.target);
+                                addTab(node.text, node.url, node.iconCls);
+                            }
+                        }
+                    })
+                })
+            });
+        })
+
+
+
+        //刷新选项卡
+        function refreshTab() {
+            var index = $('#tabs').tabs('getTabIndex', $('#tabs').tabs('getSelected'));
+            if (index != -1) {
+                var tab = $('#tabs').tabs('getTab', index);
+                $('#tabs').tabs('update', {
+                    tab: tab,
+                    options: {
+                        selected: true
+                    }
+                });
+            }
+        }
+
+        //关闭选项卡
+        function closeTab() {
+            $('.tabs-inner span').each(function (index, n) {
+                var t = $(n).text();
+                if (t != '' && t != '我的主页') {
+                    $('#tabs').tabs('close', t);
+                }
+            })
+        }
+    </script>
+</head>
+<body class="easyui-layout">
+    <div data-options="region:'north',border:false" style="height: 60px; background-color: #F5F5F5; padding: 10px; font-size: x-large;">
+        <img src="~/Content/jquery-easyui-1.5.3/images/Logo.png" /> 后台权限管理系统
+        <div style="position: absolute; right: 5px; top: 10px;">
+            欢迎您：<span style="color: #0082ff; ">@ViewBag.NickName</span>  @ViewBag.TimeView   @ViewBag.DayDate
+        </div>
+        <div style="position: absolute; right: 0px; bottom: 0px; ">
+            <a href="javascript:void(0);" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-set1'" onclick="changePwd('');">
+                修改密码
+            </a>
+            <a href="javascript:void(0);" class="easyui-linkbutton" data-options="plain:true,iconCls:'icon-stop'" onclick="logOut();">
+                退出系统
+            </a>
+        </div>
+    </div>
+    <div data-options="region:'west',split:true,title:'功能导航'" style="width: 180px; background-color: white;">
+        <div id="RightAccordion" class="easyui-accordion">
+        </div>
+    </div>
+    <div data-options="region:'center'">
+        <div id="tabs" class="easyui-tabs" fit="true" border="false" data-options="
+                    tools:[
+                    {iconCls : 'icon-arrow_refresh',text:'刷新',handler:refreshTab},
+                    {iconCls : 'icon-delete3',text:'关闭全部',handler:closeTab}
+                    ]">
+            <div id="home" title="我的主页" data-options="iconCls:'icon-house',closable:false" style="padding:10px">
+                This is the Home content.
+            </div>
+        </div>
+    </div>
+</body>
+</html>
+
+<script type="text/javascript">
+
+</script>

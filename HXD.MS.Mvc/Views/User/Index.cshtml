@@ -1,0 +1,340 @@
+﻿@{
+    Layout = null;
+}
+
+<!DOCTYPE html>
+
+<html>
+<head>
+    <meta name="viewport" content="width=device-width" />
+    <title>Index</title>
+    <link href="~/Content/jquery-easyui-1.5.3/themes/default/easyui.css" rel="stylesheet" />
+    <script src="~/Content/jquery-easyui-1.5.3/jquery.min.js"></script>
+    <script src="~/Content/jquery-easyui-1.5.3/jquery.easyui.min.js"></script>
+    <script src="~/Content/jquery-easyui-1.5.3/locale/easyui-lang-zh_CN.js"></script>
+    <link href="~/Content/table.css" rel="stylesheet" />
+    <link href="~/Content/jquery-easyui-1.5.3/themes/icon.css" rel="stylesheet" />
+    <script src="~/Content/layer/layer.js"></script>
+    <script>
+
+        //function checked(obj) {
+        //    var row = null;
+        //    var row = $(obj).datagrid('getChecked');
+        //    if (row.length < 1) {
+        //        messageBox('请选择一条记录');
+        //        return;
+        //    }
+        //    return row;
+        //}
+
+        function messageBox(text) {
+            layer.alert(text);
+        }
+        //新增
+        function add() {
+            $('<div/>').dialog({
+                id: 'table-datagrid-add',
+                href: '/User/UserAdd',
+                title: '添加用户',
+                width: 610,
+                height: 370,
+                modal: true,
+                buttons: [{
+                    id: 'btnAdd',
+                    text: '添 加',
+                    handler: function () {
+                        $('#AddForm').form('submit', {
+                            url: '/User/UserAdd',
+                            onSubmit: function (param) {
+                                param.UserName = $('#txtUserName').val();
+                                param.NickName = $('#txtNickName').val();
+                                param.Phone = $('#txtPhone').val();
+                                param.Email = $('#txtEmail').val();
+                                param.Enable = document.getElementById('cbEnable').checked;
+                                param.Remark = $('#txtRemark').val();
+                                if ($(this).form('validate')) {
+                                    $('#btnAdd').linkbutton('disable');
+                                    return true;
+                                }
+                                else {
+                                    $('#btnAdd').linkbutton('enable');
+                                    return false;
+                                }
+                            },
+                            success: function (data) {
+                                var result = JSON.parse(data);
+                                if (result.code == 200) {
+                                    $('#table-datagrid-add').dialog('destroy');
+                                    $('#table-datagrid').datagrid('reload');
+                                } else {
+                                    messageBox(result.message);
+                                }
+                            }
+                        });
+                    }
+                }, {
+                    id: 'btnCancel',
+                    text: '取 消',
+                    handler: function () {
+                        $(this).dialog('destroy');
+                    }
+                }
+                ],
+                onLoad: function () {
+
+                },
+                onClose: function () {
+                    $(this).dialog('destroy');
+                }
+            })
+        }
+
+        //删除
+        function del() {
+            var row = $('#table-datagrid').datagrid('getChecked');
+            if (row.length < 1) {
+                messageBox('请选择一条记录');
+                return;
+            }
+            $.messager.confirm('提示', '确定删除？', function (flag) {
+                if (flag) {
+                    var ids = "";
+                    $.each(rows, function (index, row) {
+                        ids += row.Id + ",";
+                    });
+                    ids = ids.substring(0, ids.length - 1);
+                    $.ajax({
+                        url: '/User/UserDelete',
+                        type: 'post',
+                        //如果后台是以ok:删除成功这种返回，加上这句话的话会不显示信息
+                        //dataType: 'json',
+                        data: { id: ids },
+                        success: function (data) {
+                            var result = JSON.parse(data);
+                            if (result.code == 200) {
+                                $('#table-datagrid').datagrid('reload').datagrid('clearSelections').datagrid('checkChecked');
+                            } else {
+                                messageBox(result.message);
+                            }
+                        }
+                    });
+                }
+            })
+        }
+        //修改
+        function edit() {
+            var row = $('#table-datagrid').datagrid('getChecked');
+            if (row.length < 1) {
+                messageBox('请选择一条记录');
+                return;
+            }
+            $('<div/>').dialog({
+                id: 'table-datagrid-edit',
+                href: '/User/UserEdit',
+                title: '修改用户',
+                width: 610,
+                height: 370,
+                modal: true,
+                buttons: [{
+                    id: 'btnEdit',
+                    text: '提 交',
+                    handler: function () {
+                        $('#EditForm').form('submit', {
+                            url: '/User/UserEdit',
+                            onSubmit: function (param) {
+                                param.Id = $('#txtId').val();
+                                param.UserName = $('#txtUserName').val();
+                                param.NickName = $('#txtNickName').val();
+                                param.Phone = $('#txtPhone').val();
+                                param.Email = $('#txtEmail').val();
+                                param.Enable = document.getElementById('cbEnable').checked;
+                                param.Remark = $('#txtRemark').val();
+                                if ($(this).form('validate')) {
+                                    $('#btnEdit').linkbutton('disable');
+                                    return true;
+                                }
+                                else {
+                                    $('#btnEdit').linkbutton('enable');
+                                    return false;
+                                }
+                            },
+                            success: function (data) {
+                                var result = JSON.parse(data);
+                                if (result.code == 200) {
+                                    $('#table-datagrid-edit').dialog('destroy');
+                                    messageBox(result.message);
+                                    $('#table-datagrid').datagrid('reload');
+                                } else {
+                                    messageBox(result.message);
+                                }
+                            }
+                        });
+                    }
+                }],
+                onLoad: function () {
+                    $('#txtId').val(row[0].Id);
+                    $('#txtUserName').val(row[0].UserName);
+                    $('#txtNickName').val(row[0].NickName);
+                    $('#txtPhone').val(row[0].Phone);
+                    $('#txtEmail').val(row[0].Email);
+                    if (row[0].Enable) {
+                        $('#cbEnable').attr('checked', 'checked');
+                    }
+                    $('#txtRemark').val(row[0].Remark);
+                },
+                onClose: function () {
+                    try {
+                        $(this).dialog('destroy');
+                    } catch (e) {
+                        console.log('--------' + e);
+                    }
+                }
+            });
+        }
+
+        //角色设置
+        function set() {
+            var row = $('#table-datagrid').datagrid('getChecked');
+            if (row.length < 1) {
+                messageBox('请选择一条记录');
+                return;
+            }
+            $('<div/>').dialog({
+                id: 'table-datagrid-set',
+                href: '/User/UserRole',
+                title: '角色设置',
+                width: 380,
+                height: 220,
+                modal: true,
+                buttons: [{
+                    id: 'btnSet',
+                    text: '提 交',
+                    handler: function () {
+                        $('#setForm').form('submit', {
+                            url: '/User/UserRole',
+                            onSubmit: function (param) {
+                                $('#btnSet').linkbutton('disable');
+                                param.UserId = $('#txtUserId');
+                                param.RoleIds = $('#comboxrole').combobox('getValues');
+                            },
+                            success: function (data) {
+                                var result = JSON.parse(data);
+                                if (result.code == 200) {
+                                    $('#table-datagrid-set').dialog('destroy');
+                                    messageBox(result.message);
+                                    $('#table-datagrid').datagrid('reload');
+                                } else {
+                                    messageBox(result.message);
+                                }
+                            }
+                        })
+                    }
+                }],
+                onLoad: function () {
+                    //$('#cbbRole').combobox('setValues', row[0].Id);
+                    $('#txtUserId').val(row[0].Id);
+                    $('#txtUserName').val(row[0].UserName);
+
+                    $.ajax({
+                        url: '/User/GetRolesByUserId',
+                        data: { userId: row[0].Id },
+                        success: function (data) {
+                            if (data != null && data != "") {
+                                $('#cbbRole').combotree('setValues', data.split(','));
+                            }
+                        }
+                    });
+                },
+                onClose: function () {
+                    $(this).dialog('destroy');
+                }
+            })
+        }
+
+        //获取分配的按钮
+        function getToolBar(data) {
+            if (data.toolbar != undefined && data.toolbar != '') {
+                var toolbar = [];
+                $.each(data.toolbar, function (index, row) {
+                    var handler = row.handler;
+                    row.handler = function () {
+                        eval(handler);
+                    }
+                    toolbar.push(row);
+                })
+                return toolbar;
+            }
+            else {
+                return [];
+            }
+        }
+
+        $(function () {
+            $.ajax({
+                url: '/Button/GetMenuButton',//加载菜单拥有的按钮
+                type: 'get',
+                dataType: 'json',
+                data: { menuCode: 'user' }
+            }).success(function (data) {
+                var toolbar = getToolBar(data);
+                $('#table-datagrid').datagrid({
+                    url: '/User/GetAllUser',
+                    idField: 'Id',
+                    pageList: [15, 30, 45],
+                    pagination: true,//是否有分页
+                    pageSize: 15,
+                    singleSelect: true,
+                    fit: true,
+                    loadMsg: 'loading...',
+                    fitColumns: true,//列自适应
+                    nowrap: false,
+                    pageNumber: 1,//当前页,
+                    rownumbers: true,
+                    queryParams: {},//后台传参
+                    striped: true,
+                    columns: [[
+                        { field: 'Id', title: '编号', width: 50 },
+                        { field: 'UserName', title: '用户名', width: 50 },
+                        { field: 'NickName', title: '昵称', width: 50 },
+                        { field: 'Phone', title: '电话', width: 50 },
+                        { field: 'Email', title: '邮箱', width: 50 },
+                        {
+                            field: 'Enable', title: '启用', width: 50, formatter: function (value, row, index) {
+                                return value ? '<img src="../Content/jquery-easyui-1.5.3/themes/icon/chk_checked.gif" alrt="启用" />' : '<img src="../Content/jquery-easyui-1.5.3/themes/icon/chk_unchecked.gif" alrt="未启用" />';
+                            }
+                        },
+                        { field: 'CreateTime', title: '创建时间', width: 50 },
+
+                        { field: 'Creater', title: '创建人', width: 50 }
+                    ]], toolbar: (toolbar.length == 0 ? null : toolbar)
+                });
+            })
+        })
+    </script>
+</head>
+<body>
+    <div id="ui_menu_layout" class="easyui-layout" data-options="fit:true,border:false">
+        <div data-options="region:'north',split:true,border:true,collapsed:false" title="搜索条件" style="height:72px;">
+            <div id="ui_menu_search">
+                <table class="tableForm" style="height:28px;background:#f5f5f5;">
+                    <tr>
+                        <th height="20px">
+                            菜单名：
+                        </th>
+                        <td>
+                            <input name="Name" id="txtSearchMenuName" class="easyui-validatebox textbox" style="width:170px;height:22px;" />
+                        </td>
+                        <td>
+                            <a href="javascript:void(0);" class="easyui-linkbutton" iconcls="icon-search" plain="true"
+                               onclick="searchdata();">搜索</a>
+                        </td>
+                    </tr>
+                </table>
+            </div>
+        </div>
+        <div data-options="region:'center',border:false">
+            <table id="table-datagrid" data-options="fit:true,border:false"></table>
+        </div>
+    </div>
+</body>
+</html>

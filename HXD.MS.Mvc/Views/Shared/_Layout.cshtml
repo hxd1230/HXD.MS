@@ -1,0 +1,52 @@
+﻿@using HXD.MS.Common;
+@using HXD.MS.Mvc.Models.ViewModels;
+<!DOCTYPE html>
+<html>
+<head>
+    <meta http-equiv="Content-Type" content="text/html; charset=utf-8" />
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>@ViewBag.Title - 我的 ASP.NET 应用程序</title>
+    @Html.Partial("_PartialHead")
+</head>
+<body>
+    <style>
+        .menu-left a {
+            background-color: #FFE585;
+            display: inline-block;
+            padding: 5px;
+            width: 100px;
+            margin: 5px;
+        }
+
+            .menu-left a:hover {
+                background-color: #E0EDFF;
+            }
+    </style>
+    <div class="easyui-layout" data-options="fit:true">
+        <!--header-->
+        <div id="header" data-options="region:'north'" style="height:50px">
+            @*@((SessionHelper.Get<LoginViewModel>("User")).UserName)*@
+            欢迎您<span class="header_name">Hello</span><a href="#">退出</a>
+        </div>
+        <div data-options="region:'south',split:true" style="height:50px;"></div>
+        <div data-options="region:'west',split:true" title="导航面板" style="width:180px;">
+            <div class="easyui-accordion">
+                <div class="menu-left" title="系统管理" data-options="iconCls:'icon-ok'" style="overflow:auto;padding:10px;text-align:center">
+                    <a onclick="myfunction()" href="javascript:;">菜单管理</a>
+                    <a href="#">菜单管理</a>
+                    <a href="#">菜单管理</a>
+                </div>
+                <div class="menu-left" title="系统管理" data-options="iconCls:'icon-ok'" style="overflow:auto;padding:10px;text-align:center">
+                    <a href="#">菜单管理</a>
+                </div><div class="menu-left" title="系统管理" data-options="iconCls:'icon-ok'" style="overflow:auto;padding:10px;text-align:center">
+                    <a href="#">菜单管理</a>
+                </div>
+            </div>
+        </div>@RenderBody()
+        @*<div data-options="region:'center',title:'主面板',iconCls:'icon-ok'">
+            
+        </div>*@
+    </div>
+</body>
+</html>
